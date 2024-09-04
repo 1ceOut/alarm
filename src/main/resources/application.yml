@@ -1,0 +1,19 @@
+server:
+    port: 9000
+spring:
+    application:
+        name: SseNotification
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        password: final123!@#
+        url: jdbc:mysql://db-oeqm8-kr.vpc-pub-cdb.ntruss.com:3306/final?serverTimezone=Asia/Seoul
+        username: bitcamp
+        hikari:
+            maximum-pool-size: 100
+    jpa:
+        database: mysql
+        database-platform: org.hibernate.dialect.MySQLDialect
+        generate-ddl: true
+        hibernate:
+            ddl-auto: update
+        show-sql: true

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    <title>SSE Notification Test</title>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            let userId = prompt("Enter your user ID:");
+
+            //로그인 예시
+            if (!userId) {
+                alert("User ID is required to proceed.");
+                location.reload();
+                return;
+            }
+
+            console.log("User ID during login:", userId);
+
+            //종 아이콘
+            const bellIcon = document.getElementById("bell-icon");
+
+            // Display the user ID
+            document.getElementById("user-info").textContent = `Logged in as User ID: ${userId}`;
+
+            // 알림 아이콘 색상 설정 함수
+            function updateBellIcon() {
+                fetch(`/api/notification/hasUnread/${userId}`)//안 읽은 알림존재 여부 파악
+                    .then(response => response.json()) //서버로부터 받은 response를 JSON형식으로 변환
+                    .then(hasUnread => {
+                        if (hasUnread) //안 읽은 알림이 존재하면
+                        {
+                            bellIcon.style.color = "red";
+                        }
+                        else //안 읽은 알림이 존재하지 않으면
+                        {
+                            bellIcon.style.color = "black";
+                        }
+                    })
+                    .catch(error => console.error('Error checking unread notifications:', error));
+            }
+
+            // 최초 실행 시 아이콘 색상 설정
+            updateBellIcon();
+
+            // SSE 구독
+            const eventSource = new EventSource(`/api/notification/subscribe/${userId}`);
+
+            //서버로부터 메시지(알림)을 받을 때마다 수행
+            eventSource.onmessage = (event) => {
+                const notification = JSON.parse(event.data);//JSON을 자바스크립트 객체로 변환
+                const div = document.createElement("div");
+
+                // alertcheck 값에 따라 초기 글씨 색상을 설정
+                if (notification.alertcheck)
+                {
+                    div.style.color = "gray";  // 이미 읽은 알림은 회색으로 표시
+                }
+                else
+                {
+                    div.style.color = "black";  // 안 읽은 알림은 검은색으로 표시
+                }
+
+                const notificationText = document.createElement("span");
+                notificationText.textContent = `${notification.sender}번이 ${notification.senderrefri}냉장고에서 ${notification.receiver}번에게 보낸 ${notification.alerttype}`;
+
+                //알림 내역을 클릭하면 DB에서 alarmcheck 변경
+                notificationText.addEventListener("click", () => {
+                    markAsRead(notification.alert_id, notificationText);
+                });
+
+                //알림 내역 삭제를 위한 삭제버튼
+                const deleteButton = document.createElement("span");
+                deleteButton.textContent = "X";
+                deleteButton.style.color = "red";
+                deleteButton.style.cursor = "pointer";
+                deleteButton.style.marginLeft = "10px";
+
+                //삭제버튼 클릭하면
+                deleteButton.addEventListener("click", () => {
+                    deleteNotification(notification.alert_id, div);//DB에서 삭제
+                });
+
+                //알림내역 div컨테이너에 추가
+                div.appendChild(notificationText);
+                //삭제버튼 div컨테이너에 추가
+                div.appendChild(deleteButton);
+
+                //notifiationsdp div컨테이너 출력
+                document.getElementById("notifications").appendChild(div);
+
+                // 알림이 왔으니 아이콘 색상 업데이트
+                updateBellIcon();
+            };
+
+            //sse 이벤트를 사용하는 JavaScript에서 오류가 발생했을 때 사용할 로직
+            eventSource.onerror = (error) => {
+                console.error("Error occurred:", error);
+                eventSource.close();
+            };
+
+            // 알림 읽음 처리 함수
+            function markAsRead(alert_id, element) {
+                fetch(`/api/notification/markAsRead/${alert_id}`, {
+                    method: 'POST'
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            element.style.color = "gray";  // 클릭 시 알림을 읽은 상태로 표시
+
+                            updateBellIcon(); // 아이콘 색상 업데이트
+
+                        } else {
+                            console.error('Failed to mark notification as read');
+                        }
+                    })
+                    .catch(error => console.error('Error marking notification as read:', error));
+            }
+
+            //알림 삭제 함수
+            function deleteNotification(alert_id, element) {
+                fetch(`/api/notification/delete/${alert_id}`, {
+                    method: 'DELETE'
+                })
+                    .then(response =>
+                    {
+                        if (response.ok) //삭제 성공
+                        {
+                            element.remove();  // 리스트에서 삭제
+
+                            updateBellIcon(); // 아이콘 색상 업데이트
+                        }
+                        else//삭제 실패
+                        {
+                            console.error('Failed to delete notification');
+                        }
+                    })
+                    .catch(error => console.error('Error deleting notification:', error));
+            }
+
+            // 버튼 클릭 이벤트 모음 -> 프론트 개발에 들어가면 쓸모 없어
+            // "냉장고 추가" 버튼 클릭 이벤트
+            document.getElementById("create-refrigerator-btn").addEventListener("click", () => {
+                fetch('/api/notification/createRefrigeratorNotification?sender=' + userId, {
+                    method: 'POST',
+                }).then(response => {
+                    if (response.ok) {
+                        console.log("Refrigerator notification sent.");
+                    } else {
+                        throw new Error('Failed to send refrigerator notification.');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+
+            // 냉장고 구성원 등록 버튼 클릭 이벤트
+            document.getElementById("regist-refrigerator-btn").addEventListener("click", () => {
+                const senderrefri = prompt("Enter the refrigerator ID to register:");
+                if (senderrefri) {
+                    fetch(`/api/notification/registRefrigeratorUserNotification`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sender: userId,
+                            senderrefri: senderrefri
+                        })
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log("Refrigerator user registration notification sent.");
+                        } else {
+                            throw new Error('Failed to send refrigerator user registration notification.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
+
+            //냉장고 수정
+            document.getElementById("update-refrigerator-btn").addEventListener("click", () => {
+                const senderrefri = prompt("Enter the refrigerator ID to edit:");
+                if (senderrefri) {
+                    fetch(`/api/notification/editRefrigeratorNotification`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sender: userId,
+                            senderrefri: senderrefri
+                        })
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log("Refrigerator edit notification sent.");
+                        } else {
+                            throw new Error('Failed to send refrigerator edit notification.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
+
+            //냉장고 삭제
+            document.getElementById("delete-refrigerator-btn").addEventListener("click", () => {
+                const senderrefri = prompt("Enter the refrigerator ID to delete:");
+                if (senderrefri) {
+                    fetch(`/api/notification/deleteRefrigeratorNotification`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sender: userId,
+                            senderrefri: senderrefri
+                        })
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log("Refrigerator delete notification sent.");
+                        } else {
+                            throw new Error('Failed to send refrigerator delete notification.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
+
+            // 좋아요 클릭 버튼
+            document.getElementById("like-btn").addEventListener("click", () => {
+                const receiver = document.getElementById("receiver").value;
+                if (receiver) {
+                    fetch(`/api/notification/checkLikeNotification?sender=${userId}&receiver=${receiver}`, {
+                        method: 'POST'
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log("Like notification sent.");
+                        } else {
+                            throw new Error('Failed to send like notification.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                    });
+                } else {
+                    alert("Please enter the receiver ID.");
+                }
+            });
+
+            // 댓글 작성 버튼
+            document.getElementById("reply-btn").addEventListener("click", () => {
+                const receiver = document.getElementById("receiver").value;
+                if (receiver) {
+                    fetch(`/api/notification/writeReply?sender=${userId}&receiver=${receiver}`, {
+                        method: 'POST'
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log("Reply notification sent.");
+                        } else {
+                            throw new Error('Failed to send reply notification.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                    });
+                } else {
+                    alert("Please enter the receiver ID.");
+                }
+            });
+
+            // 구독 버튼
+            document.getElementById("subscribe-btn").addEventListener("click", () => {
+                const receiver = document.getElementById("receiver").value;
+                if (receiver) {
+                    fetch(`/api/notification/subscribeUser?sender=${userId}&receiver=${receiver}`, {
+                        method: 'POST'
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log("Subscribe notification sent.");
+                        } else {
+                            throw new Error('Failed to send subscribe notification.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                    });
+                } else {
+                    alert("Please enter the receiver ID.");
+                }
+            });
+
+
+        });
+    </script>
+</head>
+<body>
+<h1>SSE Notification Test</h1>
+<h3 id="user-info">Logging in...</h3>
+
+<!-- 알림 아이콘 -->
+<i id="bell-icon" class="bi bi-bell" style="font-size: 40px"></i>
+<br>
+
+<label for="receiver">Receiver User ID:</label>
+<input type="text" id="receiver">
+
+<br>
+
+<!-- 알림 전송 버튼들 -->
+<div>
+    <!-- 냉장고 생성 버튼 -->
+    <button id="create-refrigerator-btn">냉장고 생성</button>
+
+    <!-- 냉장고 등록 버튼 -->
+    <!-- 어떤 사용자가 냉장고 UUID를 입력하여 해당 냉장고의 구성원으로 등록 -->
+    <button id="regist-refrigerator-btn">냉장고 등록</button>
+
+    <!-- 냉장고 정보 수정 -->
+    <button id="update-refrigerator-btn">냉장고 수정</button>
+
+    <!-- 냉장고 삭제 -->
+    <button id="delete-refrigerator-btn">냉장고 삭제</button>
+
+    <!-- 좋아요 클릭 -->
+    <button id="like-btn">좋아요 클릭</button>
+
+    <!-- 댓글 작성 -->
+    <button id="reply-btn">댓글 작성</button>
+
+    <!-- 구독 -->
+    <button id="subscribe-btn">구독</button>
+
+
+
+
+</div>
+
+<h3>Received Notifications</h3>
+<div id="notifications"></div>
+
+</body>
+</html>
