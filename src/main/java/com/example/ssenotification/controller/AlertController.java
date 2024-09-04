@@ -156,7 +156,7 @@ public class AlertController {
 
     //6. 냉장고 채팅방 새로운 공지 발생
     //현재 냉장고의 모든 구성원에게 1대다 알림 전송
-    @PostMapping("/newChatting")
+    @PostMapping("/newChattingMaster")
     public ResponseEntity<NotificationDto> newChattingMasterNotification(@RequestBody Map<String, Object> payload) {
         // 디버깅 로그
         System.out.println("Payload received: " + payload);

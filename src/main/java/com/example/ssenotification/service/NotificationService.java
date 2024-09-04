@@ -37,7 +37,8 @@ public class NotificationService {
         }
 
         // 새로운 SSE 구독 생성
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        // SseEmitter의 타임아웃을 30초로 설정 (필요에 맞게 조정 가능)
+        SseEmitter emitter = new SseEmitter(30_000L); // 30초 후 타임아웃
         userEmitters.put(userId, emitter);
 
         // SSE 구독 성공 로그 출력

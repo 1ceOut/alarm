@@ -9,7 +9,11 @@ spring:
         url: jdbc:mysql://db-oeqm8-kr.vpc-pub-cdb.ntruss.com:3306/final?serverTimezone=Asia/Seoul
         username: bitcamp
         hikari:
-            maximum-pool-size: 100
+            maximum-pool-size: 80  # 최대 연결 수
+            minimum-idle: 40  # 유휴 상태에서도 유지할 연결 수
+            idle-timeout: 30000    # 유휴 상태에서 커넥션을 유지하는 시간 (밀리초)
+            max-lifetime: 1800000  # 커넥션이 최대로 유지되는 시간 (밀리초)
+            connection-timeout: 30000  # 커넥션을 얻기 위해 대기하는 최대 시간 (밀리초)
     jpa:
         database: mysql
         database-platform: org.hibernate.dialect.MySQLDialect
