@@ -14,4 +14,7 @@ public interface MultipleUserDataFeign {
 
     @GetMapping("/food/find/Usersub")
     List<UserDto> getSubscribeUser(@RequestParam("userId") String userId);
+
+    @GetMapping("/food/find/refriName")
+    String getRefriName(@RequestParam("refrigerator_id") String refrigeratorId);
 }

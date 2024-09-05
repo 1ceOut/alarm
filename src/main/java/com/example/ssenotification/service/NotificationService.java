@@ -130,12 +130,13 @@ public class NotificationService {
     }
 
     // 새로운 냉장고 생성 알림 전송 // 1대1 알림
-    public NotificationDto sendCreateRefrigeratorNotification(String sender)
+    public NotificationDto sendCreateRefrigeratorNotification(String sender, String memo)
     {
         NotificationDto notification = new NotificationDto();
         notification.setSender(sender);
         notification.setReceiver(sender);
         notification.setAlerttype("냉장고 생성");
+        notification.setMemo(memo);
 
         NotificationDto savedNotification = notificationDaoInter.save(notification);//DB에 저장
         sendEvent(sender, savedNotification);//전송
@@ -144,7 +145,7 @@ public class NotificationService {
     }
 
     // 다대일 알림 전송 로직
-    public NotificationDto sendMultiUserNotification(String sender, List<String> receivers, String alertType, String senderrefri) {
+    public NotificationDto sendMultiUserNotification(String sender, List<String> receivers, String alertType, String senderrefri, String memo) {
         NotificationDto lastSavedNotification = null;
 
         for (String receiver : receivers) {
@@ -154,6 +155,7 @@ public class NotificationService {
                 notification.setReceiver(receiver);
                 notification.setAlerttype(alertType);
                 notification.setSenderrefri(senderrefri);
+                notification.setMemo(memo);
 
                 // DB에 알림 저장
                 lastSavedNotification = notificationDaoInter.save(notification);
@@ -171,50 +173,58 @@ public class NotificationService {
     }
 
     // 냉장고에 새로운 구성원 등록 알림 //1대다 알림
-    public NotificationDto sendRegistRefrigeratorUserNotification(String sender, String senderrefri) {
+    public NotificationDto sendRegistRefrigeratorUserNotification(String sender, String senderrefri, String memo) {
         List<String> receivers = refrigeratorUserService.getUserIdsByRefrigeratorId(senderrefri);
-        return sendMultiUserNotification(sender, receivers, "냉장고 등록", senderrefri);
+        return sendMultiUserNotification(sender, receivers, "냉장고 등록", senderrefri, memo);
     }
 
     // 냉장고 삭제 알림 //1대다 알림
-    public NotificationDto sendDeleteRefrigeratorNotification(String sender, String senderrefri) {
+    public NotificationDto sendDeleteRefrigeratorNotification(String sender, String senderrefri, String memo) {
         List<String> receivers = refrigeratorUserService.getUserIdsByRefrigeratorId(senderrefri);
-        return sendMultiUserNotification(sender, receivers, "냉장고 삭제", senderrefri);
+        return sendMultiUserNotification(sender, receivers, "냉장고 삭제", senderrefri, memo);
     }
 
     // 냉장고 정보 수정 알림 // 1대다 알림
-    public NotificationDto sendEditRefrigeratorNotification(String sender, String senderrefri) {
+    public NotificationDto sendEditRefrigeratorNotification(String sender, String senderrefri, String memo) {
         List<String> receivers = refrigeratorUserService.getUserIdsByRefrigeratorId(senderrefri);
-        return sendMultiUserNotification(sender, receivers, "냉장고 수정", senderrefri);
+        return sendMultiUserNotification(sender, receivers, "냉장고 수정", senderrefri, memo);
     }
     
     //냉장고 구성원 삭제 알림 // 1대다 알림
-    public NotificationDto sendDeleteUserFromRefrigeratorNotification(String sender, String senderrefri) {
+    public NotificationDto sendDeleteUserFromRefrigeratorNotification(String sender, String senderrefri, String memo) {
         List<String> receivers = refrigeratorUserService.getUserIdsByRefrigeratorId(senderrefri);
-        return sendMultiUserNotification(sender, receivers, "구성원 삭제", senderrefri);
+        return sendMultiUserNotification(sender, receivers, "구성원 삭제", senderrefri, memo);
     }
 
-    //냉장고 구성원 삭제 알림 // 1대다 알림
-    public NotificationDto sendNewChattingNotification(String sender, String senderrefri) {
+    //냉장고 구성원 채팅 알림 // 1대다 알림
+    public NotificationDto sendNewChattingNotification(String sender, String senderrefri, String memo) {
         List<String> receivers = refrigeratorUserService.getUserIdsByRefrigeratorId(senderrefri);
-        return sendMultiUserNotification(sender, receivers, "채팅", senderrefri);
+        return sendMultiUserNotification(sender, receivers, "채팅", senderrefri, memo);
     }
 
-    //냉장고 구성원 삭제 알림 // 1대다 알림
-    public NotificationDto sendNewChattingMasterNotification(String sender, String senderrefri) {
+    //냉장고 구성원 채팅 공지 알림 // 1대다 알림
+    public NotificationDto sendNewChattingMasterNotification(String sender, String senderrefri, String memo) {
         List<String> receivers = refrigeratorUserService.getUserIdsByRefrigeratorId(senderrefri);
-        return sendMultiUserNotification(sender, receivers, "채팅방 공지", senderrefri);
+        return sendMultiUserNotification(sender, receivers, "채팅방 공지", senderrefri, memo);
+    }
+
+    //유통기한 알림 //1대 다 알림
+    public NotificationDto sendFoodExpirationNotification(String food_id, String refrigeratorId, String remainingDay) {
+        // 냉장고의 모든 사용자 목록을 가져옴
+        List<String> receivers = refrigeratorUserService.getUserIdsByRefrigeratorId(refrigeratorId);
+        return sendMultiUserNotification(food_id, receivers, "유통기한 임박", refrigeratorId, remainingDay);
     }
 
     //=========== 커뮤니티 알림 ===============
     // 좋아요 클릭 //1대1알림
-    public NotificationDto sendCheckLikeNotification(String sender, String receiver, String recipeposting)
+    public NotificationDto sendCheckLikeNotification(String sender, String receiver, String recipeposting, String memo)
     {
         NotificationDto notification = new NotificationDto();
         notification.setSender(sender);
         notification.setReceiver(receiver);
         notification.setRecipeposting(recipeposting);
         notification.setAlerttype("좋아요");
+        notification.setMemo(memo);
 
         NotificationDto savedNotification = notificationDaoInter.save(notification);
 
@@ -224,13 +234,14 @@ public class NotificationService {
     }
 
     // 댓글 알림 전송 //1대1알림
-    public NotificationDto sendWriteReplyNotification(String sender, String receiver, String recipeposting)
+    public NotificationDto sendWriteReplyNotification(String sender, String receiver, String recipeposting, String memo)
     {
         NotificationDto notification = new NotificationDto();
         notification.setSender(sender);
         notification.setReceiver(receiver);
         notification.setRecipeposting(recipeposting);
         notification.setAlerttype("댓글 작성");
+        notification.setMemo(memo);
 
         NotificationDto savedNotification = notificationDaoInter.save(notification);
 
@@ -240,12 +251,13 @@ public class NotificationService {
     }
 
     // 구독 알림 전송 //1대1알림
-    public NotificationDto sendSubscribeNotification(String sender, String receiver)
+    public NotificationDto sendSubscribeNotification(String sender, String receiver, String memo)
     {
         NotificationDto notification = new NotificationDto();
         notification.setSender(sender);
         notification.setReceiver(receiver);
         notification.setAlerttype("구독");
+        notification.setMemo(memo);
 
         NotificationDto savedNotification = notificationDaoInter.save(notification);
 
@@ -255,7 +267,7 @@ public class NotificationService {
     }
 
     //포스팅 작성 //1대다 알림
-    public NotificationDto sendWritePostingNotification(String sender)
+    public NotificationDto sendWritePostingNotification(String sender, String memo)
     {
         List<String> receivers = subscribeUserService.getUserIdsBySubScribeUser(sender);
         NotificationDto savedNotification = null;
@@ -267,6 +279,7 @@ public class NotificationService {
             notification.setSender(sender);
             notification.setReceiver(receiver);
             notification.setAlerttype("포스팅 작성");
+            notification.setMemo(memo);
             savedNotification = notificationDaoInter.save(notification);
             sendEvent(receiver, savedNotification);
         }
@@ -274,9 +287,8 @@ public class NotificationService {
         return savedNotification; // 마지막으로 생성된 알림 반환
     }
 
-
     //방송 시작 //1대다 알림
-    public NotificationDto sendStartBroadcastingNotification(String sender)
+    public NotificationDto sendStartBroadcastingNotification(String sender, String memo)
     {
         List<String> receivers = subscribeUserService.getUserIdsBySubScribeUser(sender);
         NotificationDto savedNotification = null;
@@ -288,12 +300,12 @@ public class NotificationService {
             notification.setSender(sender);
             notification.setReceiver(receiver);
             notification.setAlerttype("방송 시작");
+            notification.setMemo(memo);
             savedNotification = notificationDaoInter.save(notification);
             sendEvent(receiver, savedNotification);
         }
 
         return savedNotification; // 마지막으로 생성된 알림 반환
     }
-
 
 }

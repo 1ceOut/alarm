@@ -28,4 +28,11 @@ public class RefrigeratorUserService {
                 .map(UserDto::getUserId)
                 .collect(Collectors.toList());
     }
+
+    public String getRefrigeratorName(String refrigeratorId) {
+        //String refrigeratorName = multipleUserDataFeign.getRefriName(refrigeratorId);
+        return multipleUserDataFeign.getRefriName(refrigeratorId);
+    }
+
+
 }

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:8080", "https://api.icebuckwheat.kro.kr"}, allowCredentials = "true")
+//@CrossOrigin(origins = {"http://localhost:8080", "https://api.icebuckwheat.kro.kr"}, allowCredentials = "true")
 @RequestMapping("/api/notification")
 public class AlertController {
 
@@ -81,9 +81,9 @@ public class AlertController {
     //1. 새로운 냉장고 생성 알림 전송
     //냉장고 생성 마스터가 스스로에게 1대1 알림 전송
     @PostMapping("/createRefrigeratorNotification")
-    public ResponseEntity<NotificationDto> createRefrigeratorNotification(@RequestParam(value = "sender") String sender)
+    public ResponseEntity<NotificationDto> createRefrigeratorNotification(@RequestParam String sender, @RequestParam String memo)
     {
-        NotificationDto notification = notificationService.sendCreateRefrigeratorNotification(sender);
+        NotificationDto notification = notificationService.sendCreateRefrigeratorNotification(sender, memo);
 
         return ResponseEntity.ok(notification);
     }
@@ -98,8 +98,9 @@ public class AlertController {
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String senderrefri = (String) payload.get("senderrefri");
+        String memo = (String) payload.get("memo");
 
-        NotificationDto notification = notificationService.sendRegistRefrigeratorUserNotification(sender, senderrefri);
+        NotificationDto notification = notificationService.sendRegistRefrigeratorUserNotification(sender, senderrefri, memo);
 
         return ResponseEntity.ok(notification);
     }
@@ -113,12 +114,12 @@ public class AlertController {
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String senderrefri = (String) payload.get("senderrefri");
+        String memo = (String) payload.get("memo");
 
-        NotificationDto notification = notificationService.sendDeleteRefrigeratorNotification(sender, senderrefri);
+        NotificationDto notification = notificationService.sendDeleteRefrigeratorNotification(sender, senderrefri, memo);
 
         return ResponseEntity.ok(notification);
     }
-
 
     //3. 냉장고 정보 수정
     //현재 냉장고의 모든 구성원에게 1대다 알림 전송
@@ -130,10 +131,11 @@ public class AlertController {
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         List<String> senderrefris = (List<String>) payload.get("senderrefri");
+        String memo = (String) payload.get("memo");
 
         NotificationDto savedNotification = null;
         for (String senderrefri : senderrefris) {
-            NotificationDto notification = notificationService.sendEditRefrigeratorNotification(sender, senderrefri);
+            NotificationDto notification = notificationService.sendEditRefrigeratorNotification(sender, senderrefri, memo);
             savedNotification = notification;
         }
 
@@ -149,8 +151,9 @@ public class AlertController {
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String senderrefri = (String) payload.get("senderrefri");
+        String memo = (String) payload.get("memo");
 
-        NotificationDto notification = notificationService.sendNewChattingNotification(sender, senderrefri);
+        NotificationDto notification = notificationService.sendNewChattingNotification(sender, senderrefri, memo);
 
         return ResponseEntity.ok(notification);
     }
@@ -164,8 +167,9 @@ public class AlertController {
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String senderrefri = (String) payload.get("senderrefri");
+        String memo = (String) payload.get("memo");
 
-        NotificationDto notification = notificationService.sendNewChattingMasterNotification(sender, senderrefri);
+        NotificationDto notification = notificationService.sendNewChattingMasterNotification(sender, senderrefri, memo);
 
         return ResponseEntity.ok(notification);
     }
@@ -180,8 +184,9 @@ public class AlertController {
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String senderrefri = (String) payload.get("senderrefri");
+        String memo = (String) payload.get("memo");
 
-        NotificationDto notification = notificationService.sendDeleteUserFromRefrigeratorNotification(sender, senderrefri);
+        NotificationDto notification = notificationService.sendDeleteUserFromRefrigeratorNotification(sender, senderrefri, memo);
 
         return ResponseEntity.ok(notification);
     }
@@ -189,45 +194,45 @@ public class AlertController {
     // =============================== 커뮤니티 알림 ===============================
     //1. 좋아요 클릭
     @PostMapping("/checkLikeNotification")
-    public ResponseEntity<NotificationDto> checkLikeNotification(@RequestParam String sender, @RequestParam String receiver, @RequestParam String recipeposting) {
+    public ResponseEntity<NotificationDto> checkLikeNotification(@RequestParam String sender, @RequestParam String receiver, @RequestParam String recipeposting, @RequestParam String memo) {
         // senderId와 receiverId를 서비스로 전달하여 알림 생성
-        NotificationDto notification = notificationService.sendCheckLikeNotification(sender, receiver, recipeposting);
+        NotificationDto notification = notificationService.sendCheckLikeNotification(sender, receiver, recipeposting, memo);
 
         return ResponseEntity.ok(notification);
     }
 
     //2. 댓글 작성
     @PostMapping("/writeReply")
-    public ResponseEntity<NotificationDto> writeReply(@RequestParam String sender, @RequestParam String receiver, @RequestParam String recipeposting) {
+    public ResponseEntity<NotificationDto> writeReply(@RequestParam String sender, @RequestParam String receiver, @RequestParam String recipeposting, @RequestParam String memo) {
 
-        NotificationDto notification = notificationService.sendWriteReplyNotification(sender, receiver, recipeposting);
+        NotificationDto notification = notificationService.sendWriteReplyNotification(sender, receiver, recipeposting, memo);
 
         return ResponseEntity.ok(notification);
     }
 
     //3. 포스팅 작성 // 1대다 전송
     @PostMapping("/writePosting")
-    public ResponseEntity<NotificationDto> writePosting(@RequestParam String sender)
+    public ResponseEntity<NotificationDto> writePosting(@RequestParam String sender, @RequestParam String memo)
     {
-        NotificationDto notification = notificationService.sendWritePostingNotification(sender);
+        NotificationDto notification = notificationService.sendWritePostingNotification(sender, memo);
 
         return ResponseEntity.ok(notification);
     }
 
     //4. 구독
     @PostMapping("/subscribeUser")
-    public ResponseEntity<NotificationDto> subscribeUser(@RequestParam String sender, @RequestParam String receiver) {
+    public ResponseEntity<NotificationDto> subscribeUser(@RequestParam String sender, @RequestParam String receiver, @RequestParam String memo) {
 
-        NotificationDto notification = notificationService.sendSubscribeNotification(sender, receiver);
+        NotificationDto notification = notificationService.sendSubscribeNotification(sender, receiver, memo);
 
         return ResponseEntity.ok(notification);
     }
 
     //5. 방송 시작 알림 / 1대다 알림
     @PostMapping("/startBroadcasting")
-    public ResponseEntity<NotificationDto> startBroadcasting(@RequestParam String sender)
+    public ResponseEntity<NotificationDto> startBroadcasting(@RequestParam String sender, @RequestParam String memo)
     {
-        NotificationDto notification = notificationService.sendStartBroadcastingNotification(sender);
+        NotificationDto notification = notificationService.sendStartBroadcastingNotification(sender, memo);
 
         return ResponseEntity.ok(notification);
     }
@@ -240,6 +245,11 @@ public class AlertController {
     @GetMapping("/find/subscribeUsers")
     public List<String> GetSubscribeUser(@RequestParam String userId) {
         return subscribeUserService.getUserIdsBySubScribeUser(userId);
+    }
+
+    @GetMapping("/find/refriNameByRefriId")
+    public String getRefriName(@RequestParam String refrigerator_id) {
+        return refrigeratorUserService.getRefrigeratorName(refrigerator_id); // 수정된 부분
     }
 
 }
