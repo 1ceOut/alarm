@@ -1,5 +1,6 @@
 package com.example.ssenotification.feign;
 
+import com.example.ssenotification.data.FoodRequest;
 import com.example.ssenotification.data.UserDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,4 +18,8 @@ public interface MultipleUserDataFeign {
 
     @GetMapping("/food/find/refriName")
     String getRefriName(@RequestParam("refrigerator_id") String refrigeratorId);
+
+    @GetMapping("/food/find/FoodName")
+    List<FoodRequest> getFoods(@RequestParam("food_id") String food_id);
+
 }
