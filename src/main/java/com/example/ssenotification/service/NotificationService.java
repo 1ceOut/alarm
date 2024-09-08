@@ -33,30 +33,43 @@ public class NotificationService {
         SseEmitter existingEmitter = userEmitters.get(userId);
         if (existingEmitter != null) {
             existingEmitter.complete();  // 기존 SSE 구독 종료
-            System.out.println("기존 SSE 구독 종료: userId=" + userId);
+            //System.out.println("기존 SSE 구독 종료: userId=" + userId);
         }
 
         // 새로운 SSE 구독 생성
-        // SseEmitter의 타임아웃을 30초로 설정 (필요에 맞게 조정 가능)
-        SseEmitter emitter = new SseEmitter(30_000L); // 30초 후 타임아웃
+        SseEmitter emitter = new SseEmitter(30_000L);
         userEmitters.put(userId, emitter);
 
         // SSE 구독 성공 로그 출력
-        System.out.println("SSE 구독 성공: userId=" + userId);
+        //System.out.println("SSE 구독 성공: userId=" + userId);
 
         // Emitter 연결 해제
         emitter.onCompletion(() -> {
             userEmitters.remove(userId);
-            System.out.println("SSE 연결 종료: userId=" + userId);
+            //System.out.println("SSE 연결 종료: userId=" + userId);
         });
+
         emitter.onTimeout(() -> {
             userEmitters.remove(userId);
-            System.out.println("SSE 연결 타임아웃: userId=" + userId);
+            //System.out.println("SSE 연결 타임아웃: userId=" + userId);
+            emitter.complete();
         });
+
         emitter.onError(e -> {
             userEmitters.remove(userId);
-            System.out.println("SSE 연결 오류: userId=" + userId);
+            //System.out.println("SSE 연결 오류: userId=" + userId);
+            emitter.completeWithError(e);
         });
+
+        // 더미 이벤트 전송 시 재연결 시간 설정
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("dummyEvent")
+                    .data("연결이 성공적으로 이루어졌습니다.")
+                    .reconnectTime(1000));  // 재연결 대기 시간 1초 (1000ms)
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         // 로그인 시 저장된 읽지 않은 알림 전송
         List<NotificationDto> notifications = getAllNotificationsForUser(userId);
@@ -82,13 +95,13 @@ public class NotificationService {
     }
 
     // userId 사용자의 모든 알림 가져오기
-    public List<NotificationDto> getAllNotificationsForUser(String userId)
+    public List<NotificationDto> getAllNotificationsForUser(String userId)//디코딩된 userId
     {
         return notificationDaoInter.findByReceiver(userId);
     }
 
     // userId의 안 읽은 알림 존재 여부 확인
-    public boolean hasUnreadNotifications(String userId)
+    public boolean hasUnreadNotifications(String userId)//디코딩된 userId
     {
         return notificationDaoInter.existsByReceiverAndAlertcheckFalse(userId);
     }
@@ -124,13 +137,13 @@ public class NotificationService {
             catch (IOException e)
             {
                 emitter.completeWithError(e);
-                userEmitters.remove(receiver);
+                userEmitters.remove(receiver);//안보내졌다고 연결을 끊을 필요가 있나.
             }
         }
     }
 
     // 새로운 냉장고 생성 알림 전송 // 1대1 알림
-    public NotificationDto sendCreateRefrigeratorNotification(String sender, String memo)
+    public NotificationDto sendCreateRefrigeratorNotification(String sender, String memo)//sender가 인코딩 되어 있네
     {
         NotificationDto notification = new NotificationDto();
         notification.setSender(sender);
@@ -189,10 +202,11 @@ public class NotificationService {
         List<String> receivers = refrigeratorUserService.getUserIdsByRefrigeratorId(senderrefri);
         return sendMultiUserNotification(sender, receivers, "냉장고 수정", senderrefri, memo);
     }
-    
+
     //냉장고 구성원 삭제 알림 // 1대다 알림
     public NotificationDto sendDeleteUserFromRefrigeratorNotification(String sender, String senderrefri, String memo) {
         List<String> receivers = refrigeratorUserService.getUserIdsByRefrigeratorId(senderrefri);
+        receivers.add(memo);
         return sendMultiUserNotification(sender, receivers, "구성원 삭제", senderrefri, memo);
     }
 
@@ -267,7 +281,7 @@ public class NotificationService {
     }
 
     //포스팅 작성 //1대다 알림
-    public NotificationDto sendWritePostingNotification(String sender, String memo)
+    public NotificationDto sendWritePostingNotification(String sender, String recipeposting, String memo)
     {
         List<String> receivers = subscribeUserService.getUserIdsBySubScribeUser(sender);
         NotificationDto savedNotification = null;
@@ -278,6 +292,7 @@ public class NotificationService {
 
             notification.setSender(sender);
             notification.setReceiver(receiver);
+            notification.setRecipeposting(recipeposting);
             notification.setAlerttype("포스팅 작성");
             notification.setMemo(memo);
             savedNotification = notificationDaoInter.save(notification);

@@ -1,5 +1,6 @@
 package com.example.ssenotification.service;
 
+import com.example.ssenotification.data.FoodRequest;
 import com.example.ssenotification.data.UserDto;
 import com.example.ssenotification.feign.MultipleUserDataFeign;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,11 @@ public class RefrigeratorUserService {
     public String getRefrigeratorName(String refrigeratorId) {
         //String refrigeratorName = multipleUserDataFeign.getRefriName(refrigeratorId);
         return multipleUserDataFeign.getRefriName(refrigeratorId);
+    }
+
+    public List<FoodRequest> getFoods(String food_id) {
+        //String refrigeratorName = multipleUserDataFeign.getRefriName(refrigeratorId);
+        return multipleUserDataFeign.getFoods(food_id);
     }
 
 
