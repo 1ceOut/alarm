@@ -37,7 +37,7 @@ public class NotificationService {
         }
 
         // 새로운 SSE 구독 생성
-        SseEmitter emitter = new SseEmitter(30_000L);
+        SseEmitter emitter = new SseEmitter(60_000L);//60초마다
         userEmitters.put(userId, emitter);
 
         // SSE 구독 성공 로그 출력
@@ -194,7 +194,31 @@ public class NotificationService {
     // 냉장고 삭제 알림 //1대다 알림
     public NotificationDto sendDeleteRefrigeratorNotification(String sender, String senderrefri, String memo) {
         List<String> receivers = refrigeratorUserService.getUserIdsByRefrigeratorId(senderrefri);
-        return sendMultiUserNotification(sender, receivers, "냉장고 삭제", senderrefri, memo);
+        NotificationDto lastSavedNotification = null;
+
+        for (String receiver : receivers)
+        {
+            NotificationDto notification = new NotificationDto();
+            notification.setSender(sender);
+            notification.setReceiver(receiver);
+            notification.setAlerttype("냉장고 삭제");
+            //notification.setSenderrefri(senderrefri);
+            notification.setMemo(memo);
+
+            // DB에 알림 저장
+            lastSavedNotification = notificationDaoInter.save(notification);
+
+            // 실시간으로 알림 전송
+            sendEvent(receiver, lastSavedNotification);
+        }
+        //deleteAllNotificationsByRefrigerator(senderrefri);
+
+        return lastSavedNotification; // 마지막으로 생성된 알림 반환
+    }
+
+    // senderrefri와 관련된 모든 알림 삭제
+    private void deleteAllNotificationsByRefrigerator(String senderrefri) {
+        notificationDaoInter.deleteBySenderrefri(senderrefri);
     }
 
     // 냉장고 정보 수정 알림 // 1대다 알림
@@ -300,6 +324,11 @@ public class NotificationService {
         }
 
         return savedNotification; // 마지막으로 생성된 알림 반환
+    }
+
+    // posting_id와 관련된 알림 삭제 (삭제 알림은 제외)
+    public void deleteAllNotificationsByPostingId(String recipeposting) {
+        notificationDaoInter.deleteByRecipeposting(recipeposting);
     }
 
     //방송 시작 //1대다 알림
