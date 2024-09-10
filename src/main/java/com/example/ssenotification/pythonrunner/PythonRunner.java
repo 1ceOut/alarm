@@ -11,10 +11,8 @@ public class PythonRunner {
                 "src/main/resources/pythonrunner/matrixFactorizationRecipeRecommendation.py",
                 userId
         );
-
         pb.redirectErrorStream(true); // 표준 오류를 표준 출력으로 합침
         Process process = pb.start();
-
         // 스크립트의 출력 결과 읽기
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         StringBuilder output = new StringBuilder();

@@ -108,7 +108,7 @@ public class AlertController {
     public ResponseEntity<NotificationDto> registRefrigeratorUserNotification(@RequestBody Map<String, Object> payload)
     {
         // 디버깅 로그
-        System.out.println("Payload received: " + payload);
+        //System.out.println("Payload received: " + payload);
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String decodedSender = URLDecoder.decode(sender, StandardCharsets.UTF_8);//디코딩데이터로 변환
@@ -126,7 +126,7 @@ public class AlertController {
     @PostMapping("/deleteRefrigeratorNotification")
     public ResponseEntity<NotificationDto> deleteRefrigeratorNotification(@RequestBody Map<String, Object> payload) {
         // 디버깅 로그
-        System.out.println("Payload received: " + payload);
+        //System.out.println("Payload received: " + payload);
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String decodedSender = URLDecoder.decode(sender, StandardCharsets.UTF_8);//디코딩데이터로 변환
@@ -145,7 +145,7 @@ public class AlertController {
     public ResponseEntity<NotificationDto> editRefrigeratorNotification(@RequestBody Map<String, Object> payload)
     {
         // 디버깅 로그
-        System.out.println("Payload received: " + payload);
+        //System.out.println("Payload received: " + payload);
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String decodedSender = URLDecoder.decode(sender, StandardCharsets.UTF_8);//디코딩데이터로 변환
@@ -163,7 +163,7 @@ public class AlertController {
     @PostMapping("/newChatting")
     public ResponseEntity<NotificationDto> newChattingNotification(@RequestBody Map<String, Object> payload) {
         // 디버깅 로그
-        System.out.println("Payload received: " + payload);
+        //System.out.println("Payload received: " + payload);
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String decodedSender = URLDecoder.decode(sender, StandardCharsets.UTF_8);//디코딩데이터로 변환
@@ -181,7 +181,7 @@ public class AlertController {
     @PostMapping("/newChattingMaster")
     public ResponseEntity<NotificationDto> newChattingMasterNotification(@RequestBody Map<String, Object> payload) {
         // 디버깅 로그
-        System.out.println("Payload received: " + payload);
+        //System.out.println("Payload received: " + payload);
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String decodedSender = URLDecoder.decode(sender, StandardCharsets.UTF_8);//디코딩데이터로 변환
         String senderrefri = (String) payload.get("senderrefri");
@@ -199,7 +199,7 @@ public class AlertController {
     public ResponseEntity<NotificationDto> deleteUserFromRefrigeratorNotification(@RequestBody Map<String, Object> payload)
     {
         // 디버깅 로그
-        System.out.println("Payload received: " + payload);
+        //System.out.println("Payload received: " + payload);
 
         String sender = payload.get("sender").toString();//이벤트를 발생시킨 나 자신
         String decodedSender = URLDecoder.decode(sender, StandardCharsets.UTF_8);//디코딩데이터로 변환
@@ -250,7 +250,7 @@ public class AlertController {
     @PostMapping("/writePosting")
     public ResponseEntity<NotificationDto> writePosting(@RequestBody Map<String, Object> payload)
     {
-        System.out.println("Payload received: " + payload);
+        //System.out.println("Payload received: " + payload);
 
         String sender = payload.get("sender").toString();
         String decodedSender = URLDecoder.decode(sender, StandardCharsets.UTF_8);
@@ -276,6 +276,16 @@ public class AlertController {
         //NotificationDto notification = notificationService.sendSubscribeNotification(sender, receiver, memo);
 
         return ResponseEntity.ok(notification);
+    }
+
+    // posting_id와 관련된 알림 삭제 엔드포인트
+    @PostMapping("/deletePostingNotifications")
+    public ResponseEntity<String> deletePostingNotifications(@RequestBody Map<String, String> payload) {
+        String recipeposting = (String) payload.get("recipeposting");
+
+        notificationService.deleteAllNotificationsByPostingId(recipeposting);
+
+        return ResponseEntity.ok(null);
     }
 
     //5. 방송 시작 알림 / 1대다 알림

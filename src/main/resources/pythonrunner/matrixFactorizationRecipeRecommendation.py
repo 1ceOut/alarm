@@ -5,6 +5,10 @@ from scipy.sparse.linalg import svds
 import mysql.connector
 import pandas as pd
 import numpy as np
+import warnings  # 경고 무시를 위한 모듈 추가
+
+# 경고 메시지 무시 설정
+warnings.filterwarnings("ignore", category=UserWarning, message="pandas only supports SQLAlchemy")
 
 # 사용자 ID를 인자로 받음
 user_id = sys.argv[1]
@@ -39,7 +43,6 @@ def get_data_from_db():
 def matrix_factorization():
     # 데이터 가져오기
     rating_data = get_data_from_db()
-    #print(rating_data)
 
     # 중복된 user_id와 posting_id가 있을 경우 나중에 나오는 데이터로 유지
     rating_data = rating_data.drop_duplicates(subset=['user_id', 'posting_id'], keep='last')
@@ -73,7 +76,7 @@ def matrix_factorization():
     return df_svd_preds, user_recipe_ratings, rating_data
 
 # 레시피 추천 함수 (posting_id만 반환)
-def recommend_posting_ids(df_svd_preds, user_id, rating_data, num_recommendations=5):
+def recommend_posting_ids(df_svd_preds, user_id, rating_data, num_recommendations=10):
     # 사용자 예측 평점 정렬
     sorted_user_predictions = df_svd_preds.loc[user_id].sort_values(ascending=False)
 
@@ -93,12 +96,10 @@ def recommend_posting_ids(df_svd_preds, user_id, rating_data, num_recommendation
 df_svd_preds, user_recipe_ratings, rating_data = matrix_factorization()
 
 # 사용자 ID에 따라 추천 수행
-#user_id = input("추천을 받을 사용자 ID를 입력하세요: ")
-already_rated, recommended_posting_ids = recommend_posting_ids(df_svd_preds, user_id, rating_data, 5)
+already_rated, recommended_posting_ids = recommend_posting_ids(df_svd_preds, user_id, rating_data, 10)
 
-#print(f"User {user_id} has already rated the following posting IDs:")
-#print(already_rated)
-
-#print(f"\nTop recommended posting IDs for user {user_id}:")
-#print(recommended_posting_ids.tolist())
-print(json.dumps(recommended_posting_ids.tolist()))
+# 추천된 posting_id 리스트만 JSON으로 반환
+if not recommended_posting_ids:
+    print(json.dumps([]))
+else:
+    print(json.dumps(recommended_posting_ids.tolist()))
