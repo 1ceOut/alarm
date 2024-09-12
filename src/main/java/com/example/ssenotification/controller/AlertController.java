@@ -240,7 +240,7 @@ public class AlertController {
         String recipeposting = (String) payload.get("recipeposting");
         String memo = (String) payload.get("memo");
 
-        NotificationDto notification = notificationService.sendCheckLikeNotification(decodedSender, decodedReceiver, recipeposting, memo);
+        NotificationDto notification = notificationService.sendWriteReplyNotification(decodedSender, decodedReceiver, recipeposting, memo);
         //NotificationDto notification = notificationService.sendWriteReplyNotification(sender, receiver, recipeposting, memo);
 
         return ResponseEntity.ok(notification);
