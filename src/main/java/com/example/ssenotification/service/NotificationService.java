@@ -37,7 +37,7 @@ public class NotificationService {
         }
 
         // 새로운 SSE 구독 생성
-        SseEmitter emitter = new SseEmitter(120_000L);//120초마다
+        SseEmitter emitter = new SseEmitter(60_000L);//60초마다
         userEmitters.put(userId, emitter);
 
         // SSE 구독 성공 로그 출력
